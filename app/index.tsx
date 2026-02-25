@@ -17,6 +17,7 @@ export default function HomeScreen() {
         ListHeaderComponent={<CategoryList />}
         renderItem={({ item }) => <ProductCard product={item} />}
         contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
   );
@@ -29,5 +30,6 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 15,
+    paddingBottom: 40,
   },
 });
