@@ -1,6 +1,7 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     FlatList,
     Image,
@@ -10,6 +11,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+
 import Footer from "../components/Footer";
 
 /* =====================================================
@@ -91,6 +93,7 @@ function ProductRow({
           {product.stock ? "In Stock" : "Out of Stock"}
         </Text>
 
+        {/* Quantity Control */}
         <View style={styles.stepperRow}>
           <TouchableOpacity
             style={styles.stepButton}
@@ -109,9 +112,15 @@ function ProductRow({
           </TouchableOpacity>
         </View>
 
+        {/* Add Cart */}
         <TouchableOpacity
           style={styles.cartButton}
-          onPress={() => onAddToCart?.({ ...product })}
+          onPress={() =>
+            onAddToCart?.({
+              ...product,
+              quantity,
+            })
+          }
         >
           <Text style={styles.cartText}>Add to Cart</Text>
         </TouchableOpacity>
@@ -127,9 +136,58 @@ function ProductRow({
 export default function ElectronicsPage({ onAddToCart }: Props) {
   const router = useRouter();
 
+  const [cart, setCart] = useState<any[]>([]);
+
+  /* =============================
+     Load Storage Cart
+  ============================= */
+
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+  const loadCart = async () => {
+    const stored = await AsyncStorage.getItem("CART_ITEMS");
+
+    if (stored) setCart(JSON.parse(stored));
+  };
+
+  const saveCart = async (items: any[]) => {
+    await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
+  };
+
+  /* =============================
+     Add To Cart Logic
+  ============================= */
+
+  const handleAddToCart = async (product: any) => {
+    const exists = cart.find((c) => c.id === product.id);
+
+    let newCart;
+
+    if (exists) {
+      newCart = cart.map((c) =>
+        c.id === product.id
+          ? { ...c, quantity: c.quantity + product.quantity }
+          : c,
+      );
+    } else {
+      newCart = [...cart, product];
+    }
+
+    setCart(newCart);
+    await saveCart(newCart);
+
+    onAddToCart?.(product);
+  };
+
+  /* =============================
+     UI Render
+  ============================= */
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* ===== HEADER BAR ===== */}
+      {/* Header */}
 
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => router.push("/")}>
@@ -139,13 +197,13 @@ export default function ElectronicsPage({ onAddToCart }: Props) {
 
       <Text style={styles.header}>Smart Electronics Devices</Text>
 
-      {/* ===== PRODUCT LIST ===== */}
+      {/* Product List */}
 
       <FlatList
         data={PRODUCTS}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <ProductRow product={item} onAddToCart={onAddToCart} />
+          <ProductRow product={item} onAddToCart={handleAddToCart} />
         )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
@@ -168,7 +226,6 @@ const styles = StyleSheet.create({
 
   topBar: {
     flexDirection: "row",
-    justifyContent: "flex-start",
     paddingVertical: 12,
   },
 

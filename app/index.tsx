@@ -1,7 +1,9 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 import {
   FlatList,
+  Image,
   Modal,
   Pressable,
   SafeAreaView,
@@ -19,8 +21,14 @@ import Header from "../components/Header";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
 
+/* =====================================================
+   HOME SCREEN
+===================================================== */
+
 export default function HomeScreen() {
   const { products } = useProducts();
+
+  const [cart, setCart] = useState<any[]>([]);
 
   const [selectedDepartment, setSelectedDepartment] =
     useState("Select Department");
@@ -29,6 +37,10 @@ export default function HomeScreen() {
   const [cartVisible, setCartVisible] = useState(false);
 
   const [activePage, setActivePage] = useState<"home" | "electronics">("home");
+
+  /* =====================================================
+     DEPARTMENT LIST
+  ===================================================== */
 
   const departments = [
     "My Cart",
@@ -55,21 +67,68 @@ export default function HomeScreen() {
   ];
 
   /* =====================================================
-   Department Selection Logic
+     SAFE STORAGE SYSTEM
+  ===================================================== */
+
+  useEffect(() => {
+    setTimeout(() => {
+      loadCart();
+    }, 300);
+  }, []);
+
+  const loadCart = async () => {
+    try {
+      const data = await AsyncStorage.getItem("CART_ITEMS");
+
+      if (data) {
+        setCart(JSON.parse(data));
+      }
+    } catch (error) {
+      console.log("Load cart error:", error);
+    }
+  };
+
+  const saveCart = async (items: any[]) => {
+    try {
+      await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
+    } catch (error) {
+      console.log("Save cart error:", error);
+    }
+  };
+
+  /* =====================================================
+     CART OPERATIONS
+  ===================================================== */
+
+  const addToCart = async (product: any) => {
+    const newCart = [...cart, product];
+
+    setCart(newCart);
+    await saveCart(newCart);
+  };
+
+  const deleteCartItem = async (index: number) => {
+    const filtered = cart.filter((_, i) => i !== index);
+
+    setCart(filtered);
+    await saveCart(filtered);
+  };
+
+  /* =====================================================
+     NAVIGATION
   ===================================================== */
 
   const handleDepartmentSelect = (value: string) => {
     setSelectedDepartment(value);
     setDepartmentVisible(false);
 
-    if (value === "My Cart") {
-      setCartVisible(true);
-      setActivePage("home");
+    if (value === "Electronics") {
+      setActivePage("electronics");
       return;
     }
 
-    if (value === "Electronics") {
-      setActivePage("electronics");
+    if (value === "My Cart") {
+      setCartVisible(true);
       return;
     }
 
@@ -77,7 +136,7 @@ export default function HomeScreen() {
   };
 
   /* =====================================================
-   Header Renderer
+     HEADER RENDER
   ===================================================== */
 
   const renderHeader = () => (
@@ -94,7 +153,7 @@ export default function HomeScreen() {
           >
             <Text style={styles.selectText}>{selectedDepartment}</Text>
 
-            <MaterialIcons name="keyboard-arrow-down" size={22} color="#555" />
+            <MaterialIcons name="keyboard-arrow-down" size={22} />
           </TouchableOpacity>
         </View>
 
@@ -103,6 +162,12 @@ export default function HomeScreen() {
           onPress={() => setCartVisible(true)}
         >
           <MaterialIcons name="shopping-cart" size={24} color="white" />
+
+          {cart.length > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{cart.length}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -111,49 +176,49 @@ export default function HomeScreen() {
   );
 
   /* =====================================================
-   Body Renderer
+     BODY
   ===================================================== */
 
   const renderBody = () => {
     if (activePage === "electronics") {
-      return <ElectronicsPage />;
+      return <ElectronicsPage onAddToCart={addToCart} />;
     }
 
     return (
       <FlatList
         data={products}
-        keyExtractor={(item) => item.id.toString()}
         numColumns={2}
-        renderItem={({ item }) => <ProductCard product={item} />}
-        showsVerticalScrollIndicator={false}
-        initialNumToRender={8}
+        renderItem={({ item }) => (
+          <ProductCard product={item} onAddToCart={addToCart} />
+        )}
+        keyExtractor={(item) => item.id.toString()}
         ListFooterComponent={<Footer />}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={{ paddingBottom: 120 }}
       />
     );
   };
+
+  /* =====================================================
+     UI
+  ===================================================== */
 
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
         ListHeaderComponent={renderHeader()}
         data={[{ key: "body" }]}
-        renderItem={() => <View style={{ width: "100%" }}>{renderBody()}</View>}
-        keyExtractor={(item) => item.key}
-        showsVerticalScrollIndicator={false}
+        renderItem={() => renderBody()}
       />
 
       {/* Department Modal */}
-      <Modal visible={departmentVisible} transparent animationType="slide">
+      <Modal visible={departmentVisible} transparent>
         <Pressable
           style={styles.overlay}
           onPress={() => setDepartmentVisible(false)}
         />
 
         <View style={styles.bottomSheet}>
-          <View style={styles.sheetHandle} />
-
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView>
             {departments.map((dept) => (
               <TouchableOpacity
                 key={dept}
@@ -168,23 +233,33 @@ export default function HomeScreen() {
       </Modal>
 
       {/* Cart Sidebar */}
-      <Modal visible={cartVisible} transparent animationType="slide">
+      <Modal visible={cartVisible} transparent>
         <Pressable
           style={styles.overlay}
           onPress={() => setCartVisible(false)}
         />
 
         <View style={styles.cartSidebar}>
-          <Text style={styles.cartTitle}>My Cart</Text>
+          <Text style={styles.cartTitle}>My Cart ({cart.length})</Text>
 
           <ScrollView>
-            <Text style={styles.cartItem}>
-              🛒 eeZee Instant Noodles Chicken Collection
-            </Text>
+            {cart.map((item, index) => (
+              <View key={index} style={styles.cartRow}>
+                <Image source={item.image} style={styles.cartImage} />
 
-            <Text style={styles.cartItem}>
-              Your cart items will appear here.
-            </Text>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text numberOfLines={1}>{item.name}</Text>
+
+                  <Text style={styles.cartPrice}>
+                    R {item.price?.toFixed(2)}
+                  </Text>
+                </View>
+
+                <TouchableOpacity onPress={() => deleteCartItem(index)}>
+                  <MaterialIcons name="delete" size={22} color="#d32f2f" />
+                </TouchableOpacity>
+              </View>
+            ))}
           </ScrollView>
 
           <TouchableOpacity
@@ -200,53 +275,37 @@ export default function HomeScreen() {
 }
 
 /* =====================================================
-   Styles
+   STYLES
 ===================================================== */
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f7fb",
-  },
+  container: { flex: 1, backgroundColor: "#f5f7fb" },
 
-  headerBlock: {
-    width: "100%",
-  },
-
-  listContainer: {
-    paddingBottom: 80,
-  },
+  headerBlock: { width: "100%" },
 
   topControls: {
     flexDirection: "row",
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 18,
-    alignItems: "flex-end",
   },
 
   dropdownLabel: {
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 6,
-    color: "#444",
   },
 
   selectButton: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     backgroundColor: "white",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    padding: 14,
     borderRadius: 18,
     elevation: 3,
   },
 
-  selectText: {
-    fontSize: 14,
-    color: "#333",
-  },
+  selectText: { fontSize: 14 },
 
   cartIconButton: {
     marginLeft: 12,
@@ -256,7 +315,20 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 5,
+  },
+
+  badge: {
+    position: "absolute",
+    right: -6,
+    top: -6,
+    backgroundColor: "#d32f2f",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+  },
+
+  badgeText: {
+    color: "white",
+    fontSize: 12,
   },
 
   overlay: {
@@ -275,25 +347,13 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 
-  sheetHandle: {
-    width: 50,
-    height: 5,
-    backgroundColor: "#ccc",
-    borderRadius: 10,
-    alignSelf: "center",
-    marginBottom: 15,
-  },
-
   departmentItem: {
     paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
 
-  departmentText: {
-    fontSize: 15,
-    color: "#333",
-  },
+  departmentText: { fontSize: 15 },
 
   cartSidebar: {
     position: "absolute",
@@ -312,9 +372,21 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  cartItem: {
-    marginBottom: 12,
-    fontSize: 14,
+  cartRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+
+  cartImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+  },
+
+  cartPrice: {
+    color: "#d32f2f",
+    fontWeight: "700",
   },
 
   closeButton: {
