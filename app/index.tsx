@@ -7,14 +7,17 @@ import {
   View,
 } from "react-native";
 
+import { useRouter } from "expo-router";
+
 import CategoryList from "../components/CategoryList";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
 
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen() {
   const { products } = useProducts();
+  const router = useRouter();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -24,8 +27,8 @@ export default function HomeScreen({ navigation }: any) {
       <View style={styles.navSection}>
         <TouchableOpacity
           style={styles.aboutButton}
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate("About")}
+          activeOpacity={0.85}
+          onPress={() => router.push("/about")}
         >
           <Text style={styles.aboutText}>About ShopSphere</Text>
         </TouchableOpacity>
@@ -40,7 +43,6 @@ export default function HomeScreen({ navigation }: any) {
         ListFooterComponent={<Footer />}
         renderItem={({ item }) => <ProductCard product={item} />}
         contentContainerStyle={styles.listContainer}
-        // ⭐ Production Performance Optimization
         initialNumToRender={8}
         maxToRenderPerBatch={8}
         windowSize={7}
@@ -59,28 +61,29 @@ const styles = StyleSheet.create({
 
   navSection: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
 
   aboutButton: {
     backgroundColor: "#2563eb",
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 14,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    elevation: 4,
   },
 
   aboutText: {
     color: "white",
     fontWeight: "600",
     fontSize: 15,
+    letterSpacing: 0.5,
   },
 
   listContainer: {
     paddingHorizontal: 10,
-    paddingBottom: 50,
+    paddingBottom: 60,
   },
 });
