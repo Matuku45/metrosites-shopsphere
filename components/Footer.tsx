@@ -18,7 +18,7 @@ export default function Footer() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Brand */}
         <Text style={styles.brand}>
-          <Text style={styles.brandWhite}>ZANBEZI</Text> e-Commerce
+          <Text style={styles.brandPrimary}>ZANBEZI</Text> e-Commerce
         </Text>
 
         <Text style={styles.description}>
@@ -43,7 +43,7 @@ export default function Footer() {
 
         <TextInput
           placeholder="Enter email"
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor="#64748B"
           style={styles.input}
         />
 
@@ -51,12 +51,12 @@ export default function Footer() {
           <Text style={styles.subscribeButtonText}>Subscribe</Text>
         </TouchableOpacity>
 
-        {/* Social */}
+        {/* Social Icons */}
         <View style={styles.socialRow}>
-          <FontAwesome name="facebook" size={18} color="white" />
-          <FontAwesome name="twitter" size={18} color="white" />
-          <FontAwesome name="linkedin" size={18} color="white" />
-          <FontAwesome name="instagram" size={18} color="white" />
+          <FontAwesome name="facebook" size={18} color="#1E293B" />
+          <FontAwesome name="twitter" size={18} color="#1E293B" />
+          <FontAwesome name="linkedin" size={18} color="#1E293B" />
+          <FontAwesome name="instagram" size={18} color="#1E293B" />
         </View>
 
         <Text style={styles.copyright}>
@@ -87,10 +87,11 @@ function CollapsibleSection({
         style={styles.sectionHeader}
       >
         <Text style={styles.sectionTitle}>{title}</Text>
+
         <MaterialIcons
           name={open ? "keyboard-arrow-up" : "keyboard-arrow-down"}
           size={20}
-          color="#fff"
+          color="#334155"
         />
       </TouchableOpacity>
 
@@ -140,27 +141,31 @@ const companyLinks = ["About", "Blog", "Corporate responsibility", "Press"];
 
 const styles = StyleSheet.create({
   footerWrapper: {
-    backgroundColor: "#020617",
-    padding: 18,
+    backgroundColor: "white",
+    padding: 20,
     borderTopLeftRadius: 35,
     borderTopRightRadius: 35,
     marginTop: 40,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
 
   brand: {
     fontSize: width * 0.07,
     fontWeight: "bold",
     textAlign: "center",
-    color: "#38BDF8",
+    color: "#0F172A",
     marginBottom: 10,
   },
 
-  brandWhite: {
-    color: "white",
+  brandPrimary: {
+    color: "#38BDF8",
   },
 
   description: {
-    color: "#CBD5E1",
+    color: "#475569",
     textAlign: "center",
     fontSize: 13,
     lineHeight: 18,
@@ -169,9 +174,11 @@ const styles = StyleSheet.create({
 
   sectionBox: {
     marginTop: 15,
-    backgroundColor: "#0F172A",
+    backgroundColor: "#F8FAFC",
     borderRadius: 18,
-    padding: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
   },
 
   sectionHeader: {
@@ -181,37 +188,37 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: "#E2E8F0",
+    color: "#0F172A",
     fontSize: 15,
     fontWeight: "600",
   },
 
   columnText: {
-    color: "#CBD5E1",
+    color: "#475569",
     fontSize: 13,
     marginTop: 6,
   },
 
   input: {
-    backgroundColor: "#0F172A",
-    color: "#fff",
+    backgroundColor: "#F1F5F9",
+    color: "#0F172A",
     padding: 12,
     borderRadius: 12,
-    marginTop: 12,
+    marginTop: 14,
     fontSize: 13,
   },
 
   subscribeText: {
-    color: "#CBD5E1",
+    color: "#475569",
     fontSize: 13,
   },
 
   subscribeButton: {
     backgroundColor: "#38BDF8",
-    padding: 12,
+    padding: 13,
     borderRadius: 12,
     alignItems: "center",
-    marginTop: 12,
+    marginTop: 14,
   },
 
   subscribeButtonText: {
@@ -226,7 +233,7 @@ const styles = StyleSheet.create({
   },
 
   copyright: {
-    color: "#64748B",
+    color: "#94A3B8",
     fontSize: 11,
     textAlign: "center",
     marginBottom: 10,
