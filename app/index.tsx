@@ -14,8 +14,11 @@ import {
   View,
 } from "react-native";
 
+import Books from "../components/Books";
 import CategoryList from "../components/CategoryList";
 import ElectronicsPage from "../components/Electronics";
+import Pets from "../components/Pets";
+
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import ProductCard from "../components/ProductCard";
@@ -36,10 +39,12 @@ export default function HomeScreen() {
   const [departmentVisible, setDepartmentVisible] = useState(false);
   const [cartVisible, setCartVisible] = useState(false);
 
-  const [activePage, setActivePage] = useState<"home" | "electronics">("home");
+  const [activePage, setActivePage] = useState<
+    "home" | "electronics" | "books" | "pets"
+  >("home");
 
   /* =====================================================
-     DEPARTMENT LIST
+     DEPARTMENTS
   ===================================================== */
 
   const departments = [
@@ -65,26 +70,20 @@ export default function HomeScreen() {
     "Electronics",
     "eeZee Instant Noodles Chicken Collection",
   ];
-
   /* =====================================================
-     SAFE STORAGE SYSTEM
+     STORAGE SYSTEM
   ===================================================== */
 
   useEffect(() => {
-    setTimeout(() => {
-      loadCart();
-    }, 300);
+    loadCart();
   }, []);
 
   const loadCart = async () => {
     try {
       const data = await AsyncStorage.getItem("CART_ITEMS");
-
-      if (data) {
-        setCart(JSON.parse(data));
-      }
+      if (data) setCart(JSON.parse(data));
     } catch (error) {
-      console.log("Load cart error:", error);
+      console.log(error);
     }
   };
 
@@ -92,24 +91,22 @@ export default function HomeScreen() {
     try {
       await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
     } catch (error) {
-      console.log("Save cart error:", error);
+      console.log(error);
     }
   };
 
   /* =====================================================
-     CART OPERATIONS
+     CART OPS
   ===================================================== */
 
   const addToCart = async (product: any) => {
     const newCart = [...cart, product];
-
     setCart(newCart);
     await saveCart(newCart);
   };
 
   const deleteCartItem = async (index: number) => {
     const filtered = cart.filter((_, i) => i !== index);
-
     setCart(filtered);
     await saveCart(filtered);
   };
@@ -122,21 +119,61 @@ export default function HomeScreen() {
     setSelectedDepartment(value);
     setDepartmentVisible(false);
 
-    if (value === "Electronics") {
-      setActivePage("electronics");
-      return;
-    }
+    switch (value) {
+      case "Electronics":
+        setActivePage("electronics");
+        break;
 
-    if (value === "My Cart") {
-      setCartVisible(true);
-      return;
-    }
+      case "Books":
+        setActivePage("books");
+        break;
 
-    setActivePage("home");
+      case "Pets & Animals":
+        setActivePage("pets");
+        break;
+
+      case "My Cart":
+        setCartVisible(true);
+        break;
+
+      default:
+        setActivePage("home");
+    }
   };
 
   /* =====================================================
-     HEADER RENDER
+     BODY RENDERER
+  ===================================================== */
+
+  const renderBody = () => {
+    if (activePage === "electronics") {
+      return <ElectronicsPage onAddToCart={addToCart} />;
+    }
+
+    if (activePage === "books") {
+      return <Books />;
+    }
+
+    if (activePage === "pets") {
+      return <Pets />;
+    }
+
+    return (
+      <FlatList
+        data={products}
+        numColumns={2}
+        renderItem={({ item }) => (
+          <ProductCard product={item} onAddToCart={addToCart} />
+        )}
+        keyExtractor={(item) => item.id.toString()}
+        ListFooterComponent={<Footer />}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      />
+    );
+  };
+
+  /* =====================================================
+     HEADER
   ===================================================== */
 
   const renderHeader = () => (
@@ -152,7 +189,6 @@ export default function HomeScreen() {
             onPress={() => setDepartmentVisible(true)}
           >
             <Text style={styles.selectText}>{selectedDepartment}</Text>
-
             <MaterialIcons name="keyboard-arrow-down" size={22} />
           </TouchableOpacity>
         </View>
@@ -176,30 +212,7 @@ export default function HomeScreen() {
   );
 
   /* =====================================================
-     BODY
-  ===================================================== */
-
-  const renderBody = () => {
-    if (activePage === "electronics") {
-      return <ElectronicsPage onAddToCart={addToCart} />;
-    }
-
-    return (
-      <FlatList
-        data={products}
-        numColumns={2}
-        renderItem={({ item }) => (
-          <ProductCard product={item} onAddToCart={addToCart} />
-        )}
-        keyExtractor={(item) => item.id.toString()}
-        ListFooterComponent={<Footer />}
-        contentContainerStyle={{ paddingBottom: 120 }}
-      />
-    );
-  };
-
-  /* =====================================================
-     UI
+     MAIN UI
   ===================================================== */
 
   return (
@@ -249,7 +262,6 @@ export default function HomeScreen() {
 
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text numberOfLines={1}>{item.name}</Text>
-
                   <Text style={styles.cartPrice}>
                     R {item.price?.toFixed(2)}
                   </Text>
@@ -280,7 +292,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f7fb" },
-
   headerBlock: { width: "100%" },
 
   topControls: {
