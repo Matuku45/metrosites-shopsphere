@@ -1,4 +1,4 @@
-import { Picker } from "@react-native-picker/picker";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -23,7 +23,9 @@ export default function HomeScreen() {
   const { products } = useProducts();
   const router = useRouter();
 
-  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedDepartment, setSelectedDepartment] =
+    useState("Select Department");
+  const [departmentVisible, setDepartmentVisible] = useState(false);
   const [cartVisible, setCartVisible] = useState(false);
 
   const departments = [
@@ -50,8 +52,9 @@ export default function HomeScreen() {
     "eeZee Instant Noodles Chicken Collection",
   ];
 
-  const handleDepartmentChange = (value: string) => {
+  const handleDepartmentSelect = (value: string) => {
     setSelectedDepartment(value);
+    setDepartmentVisible(false);
 
     if (value === "My Cart") {
       setCartVisible(true);
@@ -62,39 +65,66 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header />
-
-      {/* Modern Department Dropdown */}
-      <View style={styles.dropdownContainer}>
-        <Text style={styles.dropdownLabel}>Browse Departments</Text>
-
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={selectedDepartment}
-            onValueChange={handleDepartmentChange}
-          >
-            <Picker.Item label="Select Department..." value="" />
-            {departments.map((dept, index) => (
-              <Picker.Item key={index} label={dept} value={dept} />
-            ))}
-          </Picker>
-        </View>
-      </View>
-
-      {/* Product Listing */}
       <FlatList
         data={products}
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
-        ListHeaderComponent={<CategoryList />}
-        ListFooterComponent={<Footer />}
         renderItem={({ item }) => <ProductCard product={item} />}
-        contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+        ListHeaderComponent={
+          <>
+            {/* Header now scrolls */}
+            <Header />
+
+            {/* Modern Select Input */}
+            <View style={styles.dropdownContainer}>
+              <Text style={styles.dropdownLabel}>Browse Departments</Text>
+
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={() => setDepartmentVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.selectText}>{selectedDepartment}</Text>
+                <MaterialIcons
+                  name="keyboard-arrow-down"
+                  size={22}
+                  color="#555"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <CategoryList />
+          </>
+        }
+        ListFooterComponent={<Footer />}
       />
 
-      {/* Slide-in Cart Sidebar */}
-      <Modal visible={cartVisible} animationType="slide" transparent={true}>
+      {/* Department Bottom Sheet */}
+      <Modal visible={departmentVisible} transparent animationType="slide">
+        <Pressable
+          style={styles.overlay}
+          onPress={() => setDepartmentVisible(false)}
+        />
+
+        <View style={styles.bottomSheet}>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {departments.map((dept, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.departmentItem}
+                onPress={() => handleDepartmentSelect(dept)}
+              >
+                <Text style={styles.departmentText}>{dept}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Cart Sidebar */}
+      <Modal visible={cartVisible} animationType="slide" transparent>
         <Pressable
           style={styles.overlay}
           onPress={() => setCartVisible(false)}
@@ -130,32 +160,67 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f7fb",
   },
 
+  listContainer: {
+    paddingBottom: 60,
+  },
+
   dropdownContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 10,
+    paddingBottom: 15,
   },
 
   dropdownLabel: {
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: 6,
+    marginBottom: 8,
+    color: "#444",
   },
 
-  pickerWrapper: {
+  selectButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "white",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
 
-  listContainer: {
-    paddingHorizontal: 10,
-    paddingBottom: 60,
+  selectText: {
+    fontSize: 14,
+    color: "#333",
   },
 
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
+  },
+
+  bottomSheet: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    height: "60%",
+    backgroundColor: "white",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+  },
+
+  departmentItem: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+
+  departmentText: {
+    fontSize: 15,
+    color: "#333",
   },
 
   cartSidebar: {
