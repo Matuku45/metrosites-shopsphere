@@ -74,24 +74,35 @@ export default function HomeScreen() {
         contentContainerStyle={styles.listContainer}
         ListHeaderComponent={
           <>
-            {/* Header now scrolls */}
+            {/* Header scrolls naturally */}
             <Header />
 
-            {/* Modern Select Input */}
-            <View style={styles.dropdownContainer}>
-              <Text style={styles.dropdownLabel}>Browse Departments</Text>
+            {/* Top Controls */}
+            <View style={styles.topControls}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.dropdownLabel}>Browse Departments</Text>
 
+                <TouchableOpacity
+                  style={styles.selectButton}
+                  onPress={() => setDepartmentVisible(true)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.selectText}>{selectedDepartment}</Text>
+                  <MaterialIcons
+                    name="keyboard-arrow-down"
+                    size={22}
+                    color="#555"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Cart Icon */}
               <TouchableOpacity
-                style={styles.selectButton}
-                onPress={() => setDepartmentVisible(true)}
-                activeOpacity={0.8}
+                style={styles.cartIconButton}
+                onPress={() => setCartVisible(true)}
+                activeOpacity={0.85}
               >
-                <Text style={styles.selectText}>{selectedDepartment}</Text>
-                <MaterialIcons
-                  name="keyboard-arrow-down"
-                  size={22}
-                  color="#555"
-                />
+                <MaterialIcons name="shopping-cart" size={24} color="white" />
               </TouchableOpacity>
             </View>
 
@@ -107,8 +118,8 @@ export default function HomeScreen() {
           style={styles.overlay}
           onPress={() => setDepartmentVisible(false)}
         />
-
         <View style={styles.bottomSheet}>
+          <View style={styles.sheetHandle} />
           <ScrollView showsVerticalScrollIndicator={false}>
             {departments.map((dept, index) => (
               <TouchableOpacity
@@ -129,11 +140,10 @@ export default function HomeScreen() {
           style={styles.overlay}
           onPress={() => setCartVisible(false)}
         />
-
         <View style={styles.cartSidebar}>
           <Text style={styles.cartTitle}>My Cart</Text>
 
-          <ScrollView>
+          <ScrollView showsVerticalScrollIndicator={false}>
             <Text style={styles.cartItem}>
               🛒 eeZee Instant Noodles Chicken Collection
             </Text>
@@ -146,7 +156,7 @@ export default function HomeScreen() {
             style={styles.closeButton}
             onPress={() => setCartVisible(false)}
           >
-            <Text style={{ color: "white" }}>Close</Text>
+            <Text style={styles.closeText}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -161,19 +171,21 @@ const styles = StyleSheet.create({
   },
 
   listContainer: {
-    paddingBottom: 60,
+    paddingBottom: 80,
   },
 
-  dropdownContainer: {
+  topControls: {
+    flexDirection: "row",
+    alignItems: "flex-end",
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 15,
+    paddingTop: 12,
+    paddingBottom: 18,
   },
 
   dropdownLabel: {
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: 6,
     color: "#444",
   },
 
@@ -184,7 +196,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 14,
+    borderRadius: 18,
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 6,
@@ -196,6 +208,20 @@ const styles = StyleSheet.create({
     color: "#333",
   },
 
+  cartIconButton: {
+    marginLeft: 12,
+    backgroundColor: "#2563eb",
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -205,15 +231,24 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     width: "100%",
-    height: "60%",
+    height: "65%",
     backgroundColor: "white",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 20,
   },
 
+  sheetHandle: {
+    width: 50,
+    height: 5,
+    backgroundColor: "#ccc",
+    borderRadius: 10,
+    alignSelf: "center",
+    marginBottom: 15,
+  },
+
   departmentItem: {
-    paddingVertical: 14,
+    paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
@@ -228,14 +263,14 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    width: "75%",
+    width: "78%",
     backgroundColor: "white",
     padding: 20,
     elevation: 10,
   },
 
   cartTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
     marginBottom: 20,
   },
@@ -248,8 +283,13 @@ const styles = StyleSheet.create({
   closeButton: {
     marginTop: 20,
     backgroundColor: "#2563eb",
-    padding: 12,
-    borderRadius: 10,
+    padding: 14,
+    borderRadius: 14,
     alignItems: "center",
+  },
+
+  closeText: {
+    color: "white",
+    fontWeight: "600",
   },
 });
