@@ -19,12 +19,17 @@ import Header from "../components/Header";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
 
+/* =========================================================
+   Home Screen — Mobile Commerce Optimized
+========================================================= */
+
 export default function HomeScreen() {
   const { products } = useProducts();
   const router = useRouter();
 
   const [selectedDepartment, setSelectedDepartment] =
     useState("Select Department");
+
   const [departmentVisible, setDepartmentVisible] = useState(false);
   const [cartVisible, setCartVisible] = useState(false);
 
@@ -58,10 +63,46 @@ export default function HomeScreen() {
 
     if (value === "My Cart") {
       setCartVisible(true);
-    } else {
-      router.push(`/category/${value}`);
+      return;
     }
+
+    router.push(`/category/${encodeURIComponent(value)}`);
   };
+
+  /* =========================================================
+     Header Renderer (IMPORTANT ⭐ prevents duplication)
+  ========================================================= */
+
+  const renderHeader = () => (
+    <View style={styles.headerBlock} collapsable={false}>
+      <Header />
+
+      <View style={styles.topControls}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.dropdownLabel}>Browse Departments</Text>
+
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setDepartmentVisible(true)}
+          >
+            <Text style={styles.selectText}>{selectedDepartment}</Text>
+
+            <MaterialIcons name="keyboard-arrow-down" size={22} color="#555" />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={styles.cartIconButton}
+          onPress={() => setCartVisible(true)}
+        >
+          <MaterialIcons name="shopping-cart" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+
+      {/* CategoryList is SAFE because it uses map + horizontal scroll */}
+      <CategoryList />
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -71,59 +112,29 @@ export default function HomeScreen() {
         numColumns={2}
         renderItem={({ item }) => <ProductCard product={item} />}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-        ListHeaderComponent={
-          <>
-            {/* Header scrolls naturally */}
-            <Header />
-
-            {/* Top Controls */}
-            <View style={styles.topControls}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.dropdownLabel}>Browse Departments</Text>
-
-                <TouchableOpacity
-                  style={styles.selectButton}
-                  onPress={() => setDepartmentVisible(true)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.selectText}>{selectedDepartment}</Text>
-                  <MaterialIcons
-                    name="keyboard-arrow-down"
-                    size={22}
-                    color="#555"
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* Cart Icon */}
-              <TouchableOpacity
-                style={styles.cartIconButton}
-                onPress={() => setCartVisible(true)}
-                activeOpacity={0.85}
-              >
-                <MaterialIcons name="shopping-cart" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-
-            <CategoryList />
-          </>
-        }
+        removeClippedSubviews
+        initialNumToRender={8}
+        ListHeaderComponent={renderHeader()}
         ListFooterComponent={<Footer />}
+        contentContainerStyle={styles.listContainer}
       />
 
-      {/* Department Bottom Sheet */}
+      {/* =====================================================
+         Department Modal
+      ===================================================== */}
       <Modal visible={departmentVisible} transparent animationType="slide">
         <Pressable
           style={styles.overlay}
           onPress={() => setDepartmentVisible(false)}
         />
+
         <View style={styles.bottomSheet}>
           <View style={styles.sheetHandle} />
+
           <ScrollView showsVerticalScrollIndicator={false}>
-            {departments.map((dept, index) => (
+            {departments.map((dept) => (
               <TouchableOpacity
-                key={index}
+                key={dept}
                 style={styles.departmentItem}
                 onPress={() => handleDepartmentSelect(dept)}
               >
@@ -134,19 +145,23 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      {/* Cart Sidebar */}
-      <Modal visible={cartVisible} animationType="slide" transparent>
+      {/* =====================================================
+         Cart Sidebar Modal
+      ===================================================== */}
+      <Modal visible={cartVisible} transparent animationType="slide">
         <Pressable
           style={styles.overlay}
           onPress={() => setCartVisible(false)}
         />
+
         <View style={styles.cartSidebar}>
           <Text style={styles.cartTitle}>My Cart</Text>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView>
             <Text style={styles.cartItem}>
               🛒 eeZee Instant Noodles Chicken Collection
             </Text>
+
             <Text style={styles.cartItem}>
               Your cart items will appear here.
             </Text>
@@ -164,10 +179,19 @@ export default function HomeScreen() {
   );
 }
 
+/* =========================================================
+   Styles
+========================================================= */
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f7fb",
+  },
+
+  headerBlock: {
+    width: "100%",
+    overflow: "hidden",
   },
 
   listContainer: {
@@ -176,10 +200,10 @@ const styles = StyleSheet.create({
 
   topControls: {
     flexDirection: "row",
-    alignItems: "flex-end",
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 18,
+    alignItems: "flex-end",
   },
 
   dropdownLabel: {
@@ -197,9 +221,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
     elevation: 3,
   },
 
@@ -216,9 +237,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
     elevation: 5,
   },
 
