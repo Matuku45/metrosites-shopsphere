@@ -1,5 +1,4 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   FlatList,
@@ -14,24 +13,22 @@ import {
 } from "react-native";
 
 import CategoryList from "../components/CategoryList";
+import ElectronicsPage from "../components/Electronics";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
 
-/* =========================================================
-   Home Screen — Mobile Commerce Optimized
-========================================================= */
-
 export default function HomeScreen() {
   const { products } = useProducts();
-  const router = useRouter();
 
   const [selectedDepartment, setSelectedDepartment] =
     useState("Select Department");
 
   const [departmentVisible, setDepartmentVisible] = useState(false);
   const [cartVisible, setCartVisible] = useState(false);
+
+  const [activePage, setActivePage] = useState<"home" | "electronics">("home");
 
   const departments = [
     "My Cart",
@@ -57,24 +54,34 @@ export default function HomeScreen() {
     "eeZee Instant Noodles Chicken Collection",
   ];
 
+  /* =====================================================
+   Department Selection Logic
+  ===================================================== */
+
   const handleDepartmentSelect = (value: string) => {
     setSelectedDepartment(value);
     setDepartmentVisible(false);
 
     if (value === "My Cart") {
       setCartVisible(true);
+      setActivePage("home");
       return;
     }
 
-    router.push(`/category/${encodeURIComponent(value)}`);
+    if (value === "Electronics") {
+      setActivePage("electronics");
+      return;
+    }
+
+    setActivePage("home");
   };
 
-  /* =========================================================
-     Header Renderer (IMPORTANT ⭐ prevents duplication)
-  ========================================================= */
+  /* =====================================================
+   Header Renderer
+  ===================================================== */
 
   const renderHeader = () => (
-    <View style={styles.headerBlock} collapsable={false}>
+    <View style={styles.headerBlock}>
       <Header />
 
       <View style={styles.topControls}>
@@ -99,29 +106,44 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* CategoryList is SAFE because it uses map + horizontal scroll */}
       <CategoryList />
     </View>
   );
 
-  return (
-    <SafeAreaView style={styles.container}>
+  /* =====================================================
+   Body Renderer
+  ===================================================== */
+
+  const renderBody = () => {
+    if (activePage === "electronics") {
+      return <ElectronicsPage />;
+    }
+
+    return (
       <FlatList
         data={products}
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         renderItem={({ item }) => <ProductCard product={item} />}
         showsVerticalScrollIndicator={false}
-        removeClippedSubviews
         initialNumToRender={8}
-        ListHeaderComponent={renderHeader()}
         ListFooterComponent={<Footer />}
         contentContainerStyle={styles.listContainer}
       />
+    );
+  };
 
-      {/* =====================================================
-         Department Modal
-      ===================================================== */}
+  return (
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        ListHeaderComponent={renderHeader()}
+        data={[{ key: "body" }]}
+        renderItem={() => <View style={{ width: "100%" }}>{renderBody()}</View>}
+        keyExtractor={(item) => item.key}
+        showsVerticalScrollIndicator={false}
+      />
+
+      {/* Department Modal */}
       <Modal visible={departmentVisible} transparent animationType="slide">
         <Pressable
           style={styles.overlay}
@@ -145,9 +167,7 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      {/* =====================================================
-         Cart Sidebar Modal
-      ===================================================== */}
+      {/* Cart Sidebar */}
       <Modal visible={cartVisible} transparent animationType="slide">
         <Pressable
           style={styles.overlay}
@@ -179,9 +199,9 @@ export default function HomeScreen() {
   );
 }
 
-/* =========================================================
+/* =====================================================
    Styles
-========================================================= */
+===================================================== */
 
 const styles = StyleSheet.create({
   container: {
@@ -191,7 +211,6 @@ const styles = StyleSheet.create({
 
   headerBlock: {
     width: "100%",
-    overflow: "hidden",
   },
 
   listContainer: {
