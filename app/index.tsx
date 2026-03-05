@@ -14,25 +14,14 @@ import {
   View,
 } from "react-native";
 
-import Books from "../components/Books";
-import CategoryList from "../components/CategoryList";
-import ElectronicsPage from "../components/Electronics";
-import Pets from "../components/Pets";
-
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
-
-/* =====================================================
-   HOME SCREEN
-===================================================== */
 
 export default function HomeScreen() {
   const { products } = useProducts();
 
   const [cart, setCart] = useState<any[]>([]);
-
   const [selectedDepartment, setSelectedDepartment] =
     useState("Select Department");
 
@@ -43,9 +32,9 @@ export default function HomeScreen() {
     "home" | "electronics" | "books" | "pets"
   >("home");
 
-  /* =====================================================
-     DEPARTMENTS
-  ===================================================== */
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const categories = ["All", "Electronics", "Food", "Services", "Fashion"];
 
   const departments = [
     "My Cart",
@@ -68,11 +57,7 @@ export default function HomeScreen() {
     "Fashion & Apparel",
     "Books",
     "Electronics",
-    "eeZee Instant Noodles Chicken Collection",
   ];
-  /* =====================================================
-     STORAGE SYSTEM
-  ===================================================== */
 
   useEffect(() => {
     loadCart();
@@ -95,10 +80,6 @@ export default function HomeScreen() {
     }
   };
 
-  /* =====================================================
-     CART OPS
-  ===================================================== */
-
   const addToCart = async (product: any) => {
     const newCart = [...cart, product];
     setCart(newCart);
@@ -110,10 +91,6 @@ export default function HomeScreen() {
     setCart(filtered);
     await saveCart(filtered);
   };
-
-  /* =====================================================
-     NAVIGATION
-  ===================================================== */
 
   const handleDepartmentSelect = (value: string) => {
     setSelectedDepartment(value);
@@ -141,40 +118,7 @@ export default function HomeScreen() {
     }
   };
 
-  /* =====================================================
-     BODY RENDERER
-  ===================================================== */
-
-  const renderBody = () => {
-    if (activePage === "electronics") {
-      return <ElectronicsPage onAddToCart={addToCart} />;
-    }
-
-    if (activePage === "books") {
-      return <Books />;
-    }
-
-    if (activePage === "pets") {
-      return <Pets />;
-    }
-
-    return (
-      <FlatList
-        data={products}
-        numColumns={2}
-        renderItem={({ item }) => (
-          <ProductCard product={item} onAddToCart={addToCart} />
-        )}
-        keyExtractor={(item) => item.id.toString()}
-        ListFooterComponent={<Footer />}
-        contentContainerStyle={{ paddingBottom: 120 }}
-      />
-    );
-  };
-
-  /* =====================================================
-     HEADER
-  ===================================================== */
+  /* HEADER */
 
   const renderHeader = () => (
     <View style={styles.headerBlock}>
@@ -207,23 +151,56 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <CategoryList />
+      {/* CATEGORY SCROLL */}
+
+      <View style={styles.categoryContainer}>
+        <Text style={styles.categoryLabel}>Categories</Text>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScroll}
+        >
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category}
+              style={[
+                styles.categoryButton,
+                selectedCategory === category && styles.categoryActiveButton,
+              ]}
+              onPress={() => setSelectedCategory(category)}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category && styles.categoryActiveText,
+                ]}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
     </View>
   );
-
-  /* =====================================================
-     MAIN UI
-  ===================================================== */
 
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        ListHeaderComponent={renderHeader()}
-        data={[{ key: "body" }]}
-        renderItem={() => renderBody()}
+        data={[]}
+        numColumns={2}
+        ListHeaderComponent={renderHeader}
+        ListFooterComponent={<Footer />}
+        renderItem={null}
+        keyExtractor={(item: any) =>
+          item.id?.toString() ?? Math.random().toString()
+        }
+        contentContainerStyle={{ paddingBottom: 120 }}
       />
 
-      {/* Department Modal */}
+      {/* DEPARTMENT MODAL */}
+
       <Modal visible={departmentVisible} transparent>
         <Pressable
           style={styles.overlay}
@@ -245,7 +222,8 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      {/* Cart Sidebar */}
+      {/* CART SIDEBAR */}
+
       <Modal visible={cartVisible} transparent>
         <Pressable
           style={styles.overlay}
@@ -286,27 +264,22 @@ export default function HomeScreen() {
   );
 }
 
-/* =====================================================
-   STYLES
-===================================================== */
+/* STYLES */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f7fb" },
   headerBlock: { width: "100%" },
-
   topControls: {
     flexDirection: "row",
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 18,
   },
-
   dropdownLabel: {
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 6,
   },
-
   selectButton: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -315,7 +288,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     elevation: 3,
   },
-
   selectText: { fontSize: 14 },
 
   cartIconButton: {
@@ -340,6 +312,47 @@ const styles = StyleSheet.create({
   badgeText: {
     color: "white",
     fontSize: 12,
+  },
+
+  categoryContainer: {
+    width: "100%",
+    marginBottom: 18,
+  },
+
+  categoryLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 16,
+    marginBottom: 10,
+  },
+
+  categoryScroll: {
+    paddingHorizontal: 16,
+  },
+
+  categoryButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    marginRight: 12,
+    borderRadius: 20,
+    backgroundColor: "#f1f5f9",
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+
+  categoryActiveButton: {
+    backgroundColor: "#2563eb",
+    borderColor: "#2563eb",
+  },
+
+  categoryText: {
+    fontSize: 14,
+    color: "#333",
+  },
+
+  categoryActiveText: {
+    color: "white",
+    fontWeight: "600",
   },
 
   overlay: {
@@ -374,7 +387,6 @@ const styles = StyleSheet.create({
     width: "78%",
     backgroundColor: "white",
     padding: 20,
-    elevation: 10,
   },
 
   cartTitle: {

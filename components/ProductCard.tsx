@@ -24,7 +24,7 @@ const CATEGORIES: Category[] = [
   { id: 1, title: "Pets", imageKey: "pets" },
   { id: 2, title: "Home", imageKey: "home" },
   { id: 3, title: "Sports", imageKey: "sports" },
-  { id: 4, title: "Books", imageKey: "books" },
+  { id: 4, title: "Logistics", imageKey: "books" },
   { id: 5, title: "Outdoor", imageKey: "outdoor" },
   { id: 6, title: "Collectibles", imageKey: "collectibles" },
   { id: 7, title: "Hardware", imageKey: "hardware" },
