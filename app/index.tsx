@@ -14,18 +14,21 @@ import {
   View,
 } from "react-native";
 
+/* ===========================
+   COMPONENT IMPORTS
+=========================== */
+
 import Books from "../components/Books";
 import ElectronicsPage from "../components/Electronics";
+import Food from "../components/Food";
+import Music from "../components/Music";
 import Pets from "../components/Pets";
+import TextBooks from "../components/TextBooks";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import ProductCard from "../components/ProductCard";
-import { useProducts } from "../hooks/useProducts";
 
 export default function HomeScreen() {
-  const { products } = useProducts();
-
   const [cart, setCart] = useState<any[]>([]);
 
   const [selectedDepartment, setSelectedDepartment] =
@@ -35,7 +38,7 @@ export default function HomeScreen() {
   const [cartVisible, setCartVisible] = useState(false);
 
   const [activePage, setActivePage] = useState<
-    "home" | "electronics" | "books" | "pets"
+    "home" | "electronics" | "books" | "pets" | "textbooks" | "food" | "music"
   >("home");
 
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -50,19 +53,11 @@ export default function HomeScreen() {
     "TextBooks",
     "Food",
     "Musical Instruments",
-    "Logistics & Event Services",
-    "Gifts & Special Occasions",
-    "Collectibles & Antiques",
-    "Digital Goods & Services",
-    "Garden, Patio & BBQ",
-    "Industrial, Scientific & B2B",
-    "Office Supplies & Stationery",
-    "Sport, Fitness & Outdoors",
-    "Automotive & Motorcycle",
-    "DIY, Home Improvement & Tools",
   ];
 
-  /* STORAGE */
+  /* ===========================
+   STORAGE SYSTEM
+  =========================== */
 
   useEffect(() => {
     loadCart();
@@ -97,7 +92,9 @@ export default function HomeScreen() {
     await saveCart(filtered);
   };
 
-  /* NAVIGATION LOGIC (Same Working Style) */
+  /* ===========================
+   NAVIGATION LOGIC
+  =========================== */
 
   const handleDepartmentSelect = (value: string) => {
     setSelectedDepartment(value);
@@ -116,6 +113,18 @@ export default function HomeScreen() {
         setActivePage("pets");
         break;
 
+      case "TextBooks":
+        setActivePage("textbooks");
+        break;
+
+      case "Food":
+        setActivePage("food");
+        break;
+
+      case "Musical Instruments":
+        setActivePage("music");
+        break;
+
       case "My Cart":
         setCartVisible(true);
         break;
@@ -125,36 +134,30 @@ export default function HomeScreen() {
     }
   };
 
-  /* BODY RENDER SWITCH */
+  /* ===========================
+   BODY SWITCH RENDERER
+  =========================== */
 
   const renderBody = () => {
-    if (activePage === "electronics") {
+    if (activePage === "electronics")
       return <ElectronicsPage onAddToCart={addToCart} />;
-    }
 
-    if (activePage === "books") {
-      return <Books />;
-    }
+    if (activePage === "books") return <Books />;
 
-    if (activePage === "pets") {
-      return <Pets />;
-    }
+    if (activePage === "pets") return <Pets />;
 
-    return (
-      <FlatList
-        data={products}
-        numColumns={2}
-        renderItem={({ item }) => (
-          <ProductCard product={item} onAddToCart={addToCart} />
-        )}
-        keyExtractor={(item) => item.id.toString()}
-        ListFooterComponent={<Footer />}
-        contentContainerStyle={{ paddingBottom: 120 }}
-      />
-    );
+    if (activePage === "textbooks") return <TextBooks />;
+
+    if (activePage === "food") return <Food />;
+
+    if (activePage === "music") return <Music />;
+
+    return <Footer />;
   };
 
-  /* HEADER */
+  /* ===========================
+   HEADER
+  =========================== */
 
   const renderHeader = () => (
     <View style={styles.headerBlock}>
@@ -186,42 +189,12 @@ export default function HomeScreen() {
           )}
         </TouchableOpacity>
       </View>
-
-      {/* CATEGORY LIST */}
-
-      <View style={styles.categoryContainer}>
-        <Text style={styles.categoryLabel}>Categories</Text>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryScroll}
-        >
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryButton,
-                selectedCategory === category && styles.categoryActiveButton,
-              ]}
-              onPress={() => setSelectedCategory(category)}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategory === category && styles.categoryActiveText,
-                ]}
-              >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
     </View>
   );
 
-  /* MAIN UI */
+  /* ===========================
+   MAIN UI
+  =========================== */
 
   return (
     <SafeAreaView style={styles.container}>
@@ -232,7 +205,6 @@ export default function HomeScreen() {
       />
 
       {/* Department Modal */}
-
       <Modal visible={departmentVisible} transparent>
         <Pressable
           style={styles.overlay}
@@ -255,7 +227,6 @@ export default function HomeScreen() {
       </Modal>
 
       {/* CART SIDEBAR */}
-
       <Modal visible={cartVisible} transparent>
         <Pressable
           style={styles.overlay}
@@ -283,19 +254,15 @@ export default function HomeScreen() {
               </View>
             ))}
           </ScrollView>
-
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setCartVisible(false)}
-          >
-            <Text style={styles.closeText}>Close</Text>
-          </TouchableOpacity>
         </View>
       </Modal>
     </SafeAreaView>
   );
 }
-/* STYLES */
+
+/* ===========================
+   STYLES
+=========================== */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f7fb" },
@@ -348,47 +315,6 @@ const styles = StyleSheet.create({
   badgeText: {
     color: "white",
     fontSize: 12,
-  },
-
-  categoryContainer: {
-    width: "100%",
-    marginBottom: 18,
-  },
-
-  categoryLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 16,
-    marginBottom: 10,
-  },
-
-  categoryScroll: {
-    paddingHorizontal: 16,
-  },
-
-  categoryButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    marginRight: 12,
-    borderRadius: 20,
-    backgroundColor: "#f1f5f9",
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-
-  categoryActiveButton: {
-    backgroundColor: "#2563eb",
-    borderColor: "#2563eb",
-  },
-
-  categoryText: {
-    fontSize: 14,
-    color: "#333",
-  },
-
-  categoryActiveText: {
-    color: "white",
-    fontWeight: "600",
   },
 
   overlay: {
@@ -447,18 +373,5 @@ const styles = StyleSheet.create({
   cartPrice: {
     color: "#d32f2f",
     fontWeight: "700",
-  },
-
-  closeButton: {
-    marginTop: 20,
-    backgroundColor: "#2563eb",
-    padding: 14,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-
-  closeText: {
-    color: "white",
-    fontWeight: "600",
   },
 });
