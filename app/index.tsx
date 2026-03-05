@@ -14,14 +14,20 @@ import {
   View,
 } from "react-native";
 
+import Books from "../components/Books";
+import ElectronicsPage from "../components/Electronics";
+import Pets from "../components/Pets";
+
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
 
 export default function HomeScreen() {
   const { products } = useProducts();
 
   const [cart, setCart] = useState<any[]>([]);
+
   const [selectedDepartment, setSelectedDepartment] =
     useState("Select Department");
 
@@ -38,26 +44,25 @@ export default function HomeScreen() {
 
   const departments = [
     "My Cart",
+    "Pets & Animals",
+    "Books",
+    "Electronics",
+    "TextBooks",
+    "Food",
+    "Musical Instruments",
     "Logistics & Event Services",
     "Gifts & Special Occasions",
     "Collectibles & Antiques",
     "Digital Goods & Services",
-    "Pets & Animals",
     "Garden, Patio & BBQ",
     "Industrial, Scientific & B2B",
     "Office Supplies & Stationery",
     "Sport, Fitness & Outdoors",
     "Automotive & Motorcycle",
     "DIY, Home Improvement & Tools",
-    "Groceries, Food & Beverages",
-    "Musical Instruments",
-    "Home & Kitchen",
-    "Health & Beauty",
-    "Arts, Crafts & Sewing",
-    "Fashion & Apparel",
-    "Books",
-    "Electronics",
   ];
+
+  /* STORAGE */
 
   useEffect(() => {
     loadCart();
@@ -92,6 +97,8 @@ export default function HomeScreen() {
     await saveCart(filtered);
   };
 
+  /* NAVIGATION LOGIC (Same Working Style) */
+
   const handleDepartmentSelect = (value: string) => {
     setSelectedDepartment(value);
     setDepartmentVisible(false);
@@ -116,6 +123,35 @@ export default function HomeScreen() {
       default:
         setActivePage("home");
     }
+  };
+
+  /* BODY RENDER SWITCH */
+
+  const renderBody = () => {
+    if (activePage === "electronics") {
+      return <ElectronicsPage onAddToCart={addToCart} />;
+    }
+
+    if (activePage === "books") {
+      return <Books />;
+    }
+
+    if (activePage === "pets") {
+      return <Pets />;
+    }
+
+    return (
+      <FlatList
+        data={products}
+        numColumns={2}
+        renderItem={({ item }) => (
+          <ProductCard product={item} onAddToCart={addToCart} />
+        )}
+        keyExtractor={(item) => item.id.toString()}
+        ListFooterComponent={<Footer />}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      />
+    );
   };
 
   /* HEADER */
@@ -151,7 +187,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* CATEGORY SCROLL */}
+      {/* CATEGORY LIST */}
 
       <View style={styles.categoryContainer}>
         <Text style={styles.categoryLabel}>Categories</Text>
@@ -185,21 +221,17 @@ export default function HomeScreen() {
     </View>
   );
 
+  /* MAIN UI */
+
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        data={[]}
-        numColumns={2}
-        ListHeaderComponent={renderHeader}
-        ListFooterComponent={<Footer />}
-        renderItem={null}
-        keyExtractor={(item: any) =>
-          item.id?.toString() ?? Math.random().toString()
-        }
-        contentContainerStyle={{ paddingBottom: 120 }}
+        ListHeaderComponent={renderHeader()}
+        data={[{ key: "body" }]}
+        renderItem={() => renderBody()}
       />
 
-      {/* DEPARTMENT MODAL */}
+      {/* Department Modal */}
 
       <Modal visible={departmentVisible} transparent>
         <Pressable
@@ -263,23 +295,26 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
 /* STYLES */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f7fb" },
+
   headerBlock: { width: "100%" },
+
   topControls: {
     flexDirection: "row",
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 18,
   },
+
   dropdownLabel: {
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 6,
   },
+
   selectButton: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -288,6 +323,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     elevation: 3,
   },
+
   selectText: { fontSize: 14 },
 
   cartIconButton: {
@@ -387,6 +423,7 @@ const styles = StyleSheet.create({
     width: "78%",
     backgroundColor: "white",
     padding: 20,
+    elevation: 10,
   },
 
   cartTitle: {
