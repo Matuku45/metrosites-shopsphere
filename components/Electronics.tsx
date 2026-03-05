@@ -3,13 +3,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    FlatList,
-    Image,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import Footer from "../components/Footer";
@@ -68,7 +68,6 @@ const PRODUCTS: Product[] = [
 /* =====================================================
    Product Row Component
 ===================================================== */
-
 function ProductRow({
   product,
   onAddToCart,
@@ -77,6 +76,8 @@ function ProductRow({
   onAddToCart?: (product: Product) => void;
 }) {
   const [quantity, setQuantity] = useState(1);
+
+  const totalPrice = product.price * quantity;
 
   return (
     <View style={styles.card}>
@@ -87,19 +88,20 @@ function ProductRow({
           {product.name}
         </Text>
 
-        <Text style={styles.price}>R {product.price.toFixed(2)}</Text>
+        {/* Dynamic Price Calculation */}
+        <Text style={styles.price}>R {totalPrice.toFixed(2)}</Text>
 
         <Text style={[styles.stock, !product.stock && styles.outOfStock]}>
           {product.stock ? "In Stock" : "Out of Stock"}
         </Text>
 
-        {/* Quantity Control */}
+        {/* Quantity Controller */}
         <View style={styles.stepperRow}>
           <TouchableOpacity
             style={styles.stepButton}
             onPress={() => setQuantity((q) => Math.max(1, q - 1))}
           >
-            <Text style={styles.stepText}>-</Text>
+            <MaterialIcons name="remove" size={18} color="white" />
           </TouchableOpacity>
 
           <Text style={styles.quantity}>{quantity}</Text>
@@ -108,7 +110,7 @@ function ProductRow({
             style={styles.stepButton}
             onPress={() => setQuantity((q) => q + 1)}
           >
-            <Text style={styles.stepText}>+</Text>
+            <MaterialIcons name="add" size={18} color="white" />
           </TouchableOpacity>
         </View>
 
@@ -119,16 +121,18 @@ function ProductRow({
             onAddToCart?.({
               ...product,
               quantity,
+              price: product.price, // store base price
             })
           }
         >
-          <Text style={styles.cartText}>Add to Cart</Text>
+          <Text style={styles.cartText}>
+            Add to Cart — R {totalPrice.toFixed(2)}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
 /* =====================================================
    Electronics Page
 ===================================================== */

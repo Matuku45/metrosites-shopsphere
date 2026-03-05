@@ -1,5 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   FlatList,
@@ -29,6 +30,8 @@ import Footer from "../components/Footer";
 import Header from "../components/Header";
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   const [cart, setCart] = useState<any[]>([]);
 
   const [selectedDepartment, setSelectedDepartment] =
@@ -40,10 +43,6 @@ export default function HomeScreen() {
   const [activePage, setActivePage] = useState<
     "home" | "electronics" | "books" | "pets" | "textbooks" | "food" | "music"
   >("home");
-
-  const [selectedCategory, setSelectedCategory] = useState("All");
-
-  const categories = ["All", "Electronics", "Food", "Services", "Fashion"];
 
   const departments = [
     "My Cart",
@@ -64,32 +63,60 @@ export default function HomeScreen() {
   }, []);
 
   const loadCart = async () => {
-    try {
-      const data = await AsyncStorage.getItem("CART_ITEMS");
-      if (data) setCart(JSON.parse(data));
-    } catch (error) {
-      console.log(error);
-    }
+    const data = await AsyncStorage.getItem("CART_ITEMS");
+    if (data) setCart(JSON.parse(data));
   };
 
   const saveCart = async (items: any[]) => {
-    try {
-      await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
-    } catch (error) {
-      console.log(error);
-    }
+    await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
   };
 
+  /* ===========================
+   CART FUNCTIONS
+  =========================== */
+
   const addToCart = async (product: any) => {
-    const newCart = [...cart, product];
-    setCart(newCart);
-    await saveCart(newCart);
+    const existing = cart.find((item) => item.id === product.id);
+
+    let updated;
+
+    if (existing) {
+      updated = cart.map((item) =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      );
+    } else {
+      updated = [...cart, { ...product, quantity: 1 }];
+    }
+
+    setCart(updated);
+    saveCart(updated);
+  };
+
+  const increaseQty = async (index: number) => {
+    const updated = [...cart];
+    updated[index].quantity += 1;
+
+    setCart(updated);
+    saveCart(updated);
+  };
+
+  const decreaseQty = async (index: number) => {
+    const updated = [...cart];
+
+    if (updated[index].quantity > 1) {
+      updated[index].quantity -= 1;
+    }
+
+    setCart(updated);
+    saveCart(updated);
   };
 
   const deleteCartItem = async (index: number) => {
     const filtered = cart.filter((_, i) => i !== index);
     setCart(filtered);
-    await saveCart(filtered);
+    saveCart(filtered);
   };
 
   /* ===========================
@@ -135,7 +162,7 @@ export default function HomeScreen() {
   };
 
   /* ===========================
-   BODY SWITCH RENDERER
+   BODY RENDERER
   =========================== */
 
   const renderBody = () => {
@@ -193,7 +220,7 @@ export default function HomeScreen() {
   );
 
   /* ===========================
-   MAIN UI
+   UI
   =========================== */
 
   return (
@@ -243,9 +270,29 @@ export default function HomeScreen() {
 
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text numberOfLines={1}>{item.name}</Text>
+
                   <Text style={styles.cartPrice}>
                     R {item.price?.toFixed(2)}
                   </Text>
+
+                  {/* QUANTITY CONTROLS */}
+                  <View style={styles.qtyRow}>
+                    <TouchableOpacity
+                      style={styles.qtyBtn}
+                      onPress={() => decreaseQty(index)}
+                    >
+                      <MaterialIcons name="remove" size={18} />
+                    </TouchableOpacity>
+
+                    <Text style={styles.qtyText}>{item.quantity}</Text>
+
+                    <TouchableOpacity
+                      style={styles.qtyBtn}
+                      onPress={() => increaseQty(index)}
+                    >
+                      <MaterialIcons name="add" size={18} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <TouchableOpacity onPress={() => deleteCartItem(index)}>
@@ -254,6 +301,17 @@ export default function HomeScreen() {
               </View>
             ))}
           </ScrollView>
+
+          {/* CHECKOUT BUTTON */}
+          <TouchableOpacity
+            style={styles.checkoutButton}
+            onPress={() => {
+              setCartVisible(false);
+              router.push("/Checkout");
+            }}
+          >
+            <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </SafeAreaView>
@@ -312,10 +370,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
 
-  badgeText: {
-    color: "white",
-    fontSize: 12,
-  },
+  badgeText: { color: "white", fontSize: 12 },
 
   overlay: {
     flex: 1,
@@ -361,7 +416,7 @@ const styles = StyleSheet.create({
   cartRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 18,
   },
 
   cartImage: {
@@ -373,5 +428,40 @@ const styles = StyleSheet.create({
   cartPrice: {
     color: "#d32f2f",
     fontWeight: "700",
+  },
+
+  qtyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+  },
+
+  qtyBtn: {
+    width: 26,
+    height: 26,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 6,
+  },
+
+  qtyText: {
+    marginHorizontal: 10,
+    fontWeight: "600",
+  },
+
+  checkoutButton: {
+    backgroundColor: "#2563eb",
+    padding: 16,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 20,
+  },
+
+  checkoutText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 15,
   },
 });
