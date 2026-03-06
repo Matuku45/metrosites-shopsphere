@@ -1,8 +1,10 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Alert,
+  Animated,
   FlatList,
   Image,
   Modal,
@@ -28,12 +30,36 @@ import TextBooks from "../components/TextBooks";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import CategoryImageList from "../components/ProductCard";
+
+/* ===========================
+   HOME SCREEN
+=========================== */
 
 export default function HomeScreen() {
   const router = useRouter();
 
-  const [cart, setCart] = useState<any[]>([]);
+  /* ⭐ AI ANIMATION ENGINE */
+  const bounceAnim = useRef(new Animated.Value(0)).current;
 
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: -10,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+
+  const [cart, setCart] = useState<any[]>([]);
   const [selectedDepartment, setSelectedDepartment] =
     useState("Select Department");
 
@@ -54,44 +80,39 @@ export default function HomeScreen() {
     "Musical Instruments",
   ];
 
-  /* ===========================
-   STORAGE SYSTEM
-  =========================== */
-
   useEffect(() => {
-    loadCart();
-  }, []);
+    (global as any).cartRefresh = async () => {
+      const data = await AsyncStorage.getItem("CART_ITEMS");
+      if (data) setCart(JSON.parse(data));
+    };
 
-  const loadCart = async () => {
-    const data = await AsyncStorage.getItem("CART_ITEMS");
-    if (data) setCart(JSON.parse(data));
-  };
+    return () => {
+      (global as any).cartRefresh = null;
+    };
+  }, []);
 
   const saveCart = async (items: any[]) => {
     await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
   };
 
-  /* ===========================
-   CART FUNCTIONS
-  =========================== */
-
   const addToCart = async (product: any) => {
-    const existing = cart.find((item) => item.id === product.id);
+    const stored = await AsyncStorage.getItem("CART_ITEMS");
 
-    let updated;
+    let cartData: any[] = stored ? JSON.parse(stored) : [];
 
-    if (existing) {
-      updated = cart.map((item) =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item,
-      );
+    const index = cartData.findIndex((p) => p.id === product.id);
+
+    if (index !== -1) {
+      cartData[index].quantity += product.quantity || 1;
     } else {
-      updated = [...cart, { ...product, quantity: 1 }];
+      cartData.push({
+        ...product,
+        quantity: product.quantity || 1,
+      });
     }
 
-    setCart(updated);
-    saveCart(updated);
+    setCart([...cartData]);
+    await saveCart(cartData);
   };
 
   const increaseQty = async (index: number) => {
@@ -99,7 +120,7 @@ export default function HomeScreen() {
     updated[index].quantity += 1;
 
     setCart(updated);
-    saveCart(updated);
+    await saveCart(updated);
   };
 
   const decreaseQty = async (index: number) => {
@@ -110,18 +131,15 @@ export default function HomeScreen() {
     }
 
     setCart(updated);
-    saveCart(updated);
+    await saveCart(updated);
   };
 
   const deleteCartItem = async (index: number) => {
     const filtered = cart.filter((_, i) => i !== index);
-    setCart(filtered);
-    saveCart(filtered);
-  };
 
-  /* ===========================
-   NAVIGATION LOGIC
-  =========================== */
+    setCart(filtered);
+    await saveCart(filtered);
+  };
 
   const handleDepartmentSelect = (value: string) => {
     setSelectedDepartment(value);
@@ -161,15 +179,11 @@ export default function HomeScreen() {
     }
   };
 
-  /* ===========================
-   BODY RENDERER
-  =========================== */
-
   const renderBody = () => {
     if (activePage === "electronics")
       return <ElectronicsPage onAddToCart={addToCart} />;
 
-    if (activePage === "books") return <Books />;
+    if (activePage === "books") return <Books onAddToCart={addToCart} />;
 
     if (activePage === "pets") return <Pets />;
 
@@ -179,11 +193,16 @@ export default function HomeScreen() {
 
     if (activePage === "music") return <Music />;
 
-    return <Footer />;
+    return (
+      <ScrollView>
+        <CategoryImageList />
+        <Footer />
+      </ScrollView>
+    );
   };
 
   /* ===========================
-   HEADER
+     HEADER UI (AI ICON PERFECT)
   =========================== */
 
   const renderHeader = () => (
@@ -203,6 +222,27 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* ⭐ ROBOT AI BUTTON */}
+        <TouchableOpacity
+          onPress={() => {
+            Alert.alert(
+              "🤖 Smart Shopping Assistant",
+              "I am your AI robot assistant. I can suggest products, help you search, and improve your shopping experience!",
+            );
+
+            router.push("/AI_SUGGESTION");
+          }}
+        >
+          <Animated.View
+            style={[
+              styles.aiButton,
+              { transform: [{ translateY: bounceAnim }] },
+            ]}
+          >
+            <MaterialIcons name="smart-toy" size={28} color="white" />
+          </Animated.View>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.cartIconButton}
           onPress={() => setCartVisible(true)}
@@ -219,10 +259,6 @@ export default function HomeScreen() {
     </View>
   );
 
-  /* ===========================
-   UI
-  =========================== */
-
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
@@ -232,7 +268,7 @@ export default function HomeScreen() {
       />
 
       {/* Department Modal */}
-      <Modal visible={departmentVisible} transparent>
+      <Modal visible={departmentVisible} transparent animationType="fade">
         <Pressable
           style={styles.overlay}
           onPress={() => setDepartmentVisible(false)}
@@ -254,7 +290,7 @@ export default function HomeScreen() {
       </Modal>
 
       {/* CART SIDEBAR */}
-      <Modal visible={cartVisible} transparent>
+      <Modal visible={cartVisible} transparent animationType="slide">
         <Pressable
           style={styles.overlay}
           onPress={() => setCartVisible(false)}
@@ -266,16 +302,18 @@ export default function HomeScreen() {
           <ScrollView>
             {cart.map((item, index) => (
               <View key={index} style={styles.cartRow}>
-                <Image source={item.image} style={styles.cartImage} />
+                <Image
+                  source={item.image || require("../assets/images/icon.png")}
+                  style={styles.cartImage}
+                />
 
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text numberOfLines={1}>{item.name}</Text>
 
                   <Text style={styles.cartPrice}>
-                    R {item.price?.toFixed(2)}
+                    R {(item.price * item.quantity).toFixed(2)}
                   </Text>
 
-                  {/* QUANTITY CONTROLS */}
                   <View style={styles.qtyRow}>
                     <TouchableOpacity
                       style={styles.qtyBtn}
@@ -302,7 +340,6 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
 
-          {/* CHECKOUT BUTTON */}
           <TouchableOpacity
             style={styles.checkoutButton}
             onPress={() => {
@@ -359,6 +396,21 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  aiButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: "#10b981",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 10,
+
+    shadowColor: "#10b981",
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 8,
   },
 
   badge: {

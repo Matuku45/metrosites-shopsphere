@@ -3,13 +3,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    FlatList,
-    Image,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import Footer from "./Footer";
@@ -24,6 +24,7 @@ interface Product {
   price: number;
   stock: boolean;
   image: any;
+  quantity?: number;
 }
 
 interface Props {
@@ -61,7 +62,7 @@ const MUSIC_PRODUCTS: Product[] = [
 ];
 
 /* =====================================================
-   PRODUCT ROW COMPONENT
+   PRODUCT CARD
 ===================================================== */
 
 function ProductRow({
@@ -73,6 +74,8 @@ function ProductRow({
 }) {
   const [quantity, setQuantity] = useState(1);
 
+  const totalPrice = product.price * quantity;
+
   return (
     <View style={styles.card}>
       <Image source={product.image} style={styles.image} />
@@ -82,12 +85,13 @@ function ProductRow({
           {product.name}
         </Text>
 
-        <Text style={styles.price}>R {product.price.toFixed(2)}</Text>
+        <Text style={styles.price}>R {totalPrice.toFixed(2)}</Text>
 
         <Text style={styles.stock}>
           {product.stock ? "In Stock" : "Out of Stock"}
         </Text>
 
+        {/* Quantity Control */}
         <View style={styles.stepperRow}>
           <TouchableOpacity
             style={styles.stepButton}
@@ -106,13 +110,14 @@ function ProductRow({
           </TouchableOpacity>
         </View>
 
+        {/* Add Cart */}
         <TouchableOpacity
           style={styles.cartButton}
           onPress={() =>
             onAddToCart?.({
               ...product,
               quantity,
-            } as any)
+            })
           }
         >
           <Text style={styles.cartText}>Add to Cart</Text>
@@ -121,8 +126,9 @@ function ProductRow({
     </View>
   );
 }
+
 /* =====================================================
-   MUSIC PAGE
+   MUSIC PAGE (PRODUCTION SAFE CART ENGINE)
 ===================================================== */
 
 export default function MusicPage({ onAddToCart }: Props) {
@@ -134,31 +140,59 @@ export default function MusicPage({ onAddToCart }: Props) {
     loadCart();
   }, []);
 
+  /* ================= STORAGE ================= */
+
   const loadCart = async () => {
     try {
-      const data = await AsyncStorage.getItem("CART_ITEMS");
-      if (data) setCartCache(JSON.parse(data));
+      const stored = await AsyncStorage.getItem("CART_ITEMS");
+
+      if (stored) {
+        setCartCache(JSON.parse(stored));
+      }
     } catch (error) {
       console.log(error);
     }
   };
 
   const saveCart = async (items: any[]) => {
+    await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
+  };
+
+  /* ================= CART ENGINE ================= */
+
+  const handleAddMusic = async (product: Product & { quantity?: number }) => {
     try {
-      await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
+      const stored = await AsyncStorage.getItem("CART_ITEMS");
+
+      let cart: any[] = stored ? JSON.parse(stored) : [];
+
+      const index = cart.findIndex((item) => item.id === product.id);
+
+      if (index !== -1) {
+        cart[index].quantity =
+          (cart[index].quantity || 0) + (product.quantity || 1);
+      } else {
+        cart.push({
+          ...product,
+          quantity: product.quantity || 1,
+        });
+      }
+
+      await saveCart(cart);
+      setCartCache([...cart]);
+
+      // Global cart badge refresh
+      if ((global as any).cartRefresh) {
+        await (global as any).cartRefresh();
+      }
+
+      onAddToCart?.(product);
     } catch (error) {
-      console.log(error);
+      console.log("MUSIC CART ERROR", error);
     }
   };
 
-  const handleAddMusic = async (product: Product) => {
-    const newCart = [...cartCache, product];
-
-    setCartCache(newCart);
-    await saveCart(newCart);
-
-    onAddToCart?.(product);
-  };
+  /* ================= UI ================= */
 
   return (
     <SafeAreaView style={styles.container}>

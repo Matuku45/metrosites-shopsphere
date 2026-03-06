@@ -1,4 +1,4 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -24,10 +24,7 @@ interface Product {
   price: number;
   stock: boolean;
   image: any;
-}
-
-interface Props {
-  onAddToCart?: (product: Product) => void;
+  quantity?: number;
 }
 
 /* =====================================================
@@ -101,7 +98,7 @@ const TEXTBOOKS: Product[] = [
 ];
 
 /* =====================================================
-   PRODUCT ROW COMPONENT
+   PRODUCT CARD
 ===================================================== */
 
 function ProductRow({
@@ -113,16 +110,18 @@ function ProductRow({
 }) {
   const [quantity, setQuantity] = useState(1);
 
+  const totalPrice = product.price * quantity;
+
   return (
     <View style={styles.card}>
       <Image source={product.image} style={styles.image} />
 
-      <View style={styles.infoSection}>
+      <View style={{ flex: 1 }}>
         <Text style={styles.title} numberOfLines={2}>
           {product.name}
         </Text>
 
-        <Text style={styles.price}>R {product.price.toFixed(2)}</Text>
+        <Text style={styles.price}>R {totalPrice.toFixed(2)}</Text>
 
         <Text style={styles.stock}>
           {product.stock ? "In Stock" : "Out of Stock"}
@@ -155,7 +154,9 @@ function ProductRow({
             })
           }
         >
-          <Text style={styles.cartText}>Add to Cart</Text>
+          <Text style={styles.cartText}>
+            Add to Cart — R {totalPrice.toFixed(2)}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -166,40 +167,63 @@ function ProductRow({
    TEXTBOOK PAGE
 ===================================================== */
 
-export default function TextBooksPage({ onAddToCart }: Props) {
+export default function TextBooksPage() {
   const router = useRouter();
-
   const [cartCache, setCartCache] = useState<any[]>([]);
 
   useEffect(() => {
     loadCart();
   }, []);
 
+  /* ================= STORAGE ================= */
+
   const loadCart = async () => {
     try {
       const data = await AsyncStorage.getItem("CART_ITEMS");
       if (data) setCartCache(JSON.parse(data));
-    } catch (error) {
-      console.log(error);
-    }
+    } catch {}
   };
 
   const saveCart = async (items: any[]) => {
+    await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
+  };
+
+  /* ================= CART ENGINE ================= */
+
+  const handleAddTextbook = async (
+    product: Product & { quantity?: number },
+  ) => {
     try {
-      await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
+      const stored = await AsyncStorage.getItem("CART_ITEMS");
+
+      let cart: any[] = stored ? JSON.parse(stored) : [];
+
+      const index = cart.findIndex((item) => item.id === product.id);
+
+      if (index !== -1) {
+        cart[index].quantity =
+          (cart[index].quantity || 1) + (product.quantity || 1);
+      } else {
+        cart.push({
+          ...product,
+          quantity: product.quantity || 1,
+        });
+      }
+
+      await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(cart));
+
+      setCartCache(cart);
+
+      // 🔥 Notify parent system if exists
+      if ((global as any).cartRefresh) {
+        (global as any).cartRefresh();
+      }
     } catch (error) {
-      console.log(error);
+      console.log("Textbook Cart Error", error);
     }
   };
 
-  const handleAddTextbook = async (product: Product) => {
-    const newCart = [...cartCache, product];
-
-    setCartCache(newCart);
-    await saveCart(newCart);
-
-    onAddToCart?.(product);
-  };
+  /* ================= UI ================= */
 
   return (
     <SafeAreaView style={styles.container}>
@@ -261,8 +285,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginRight: 12,
   },
-
-  infoSection: { flex: 1 },
 
   title: {
     fontSize: 16,

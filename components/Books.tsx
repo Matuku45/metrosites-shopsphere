@@ -3,18 +3,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    FlatList,
-    Image,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+
 import Footer from "./Footer";
 
 /* =====================================================
-   PRODUCT INTERFACE
+   Product Interface
 ===================================================== */
 
 interface Product {
@@ -23,6 +24,7 @@ interface Product {
   price: number;
   stock: boolean;
   image: any;
+  quantity?: number;
 }
 
 interface Props {
@@ -30,7 +32,7 @@ interface Props {
 }
 
 /* =====================================================
-   IMAGE DATABASE
+   BOOK IMAGE DATABASE
 ===================================================== */
 
 const BOOK_IMAGES: Record<string, any> = {
@@ -38,52 +40,45 @@ const BOOK_IMAGES: Record<string, any> = {
   womenInZambia: require("../assets/ClickablePictures/books/WomenInZambia.jpg"),
   zambia3: require("../assets/ClickablePictures/books/zambia3.jpg"),
   zambia4: require("../assets/ClickablePictures/books/zambia4.jpg"),
-  zambia5: require("../assets/ClickablePictures/books/zambia5.jpg"),
-  zambia6: require("../assets/ClickablePictures/books/zambia6.jpg"),
-  zambia7: require("../assets/ClickablePictures/books/zambia7.jpg"),
-  zambia8: require("../assets/ClickablePictures/books/zambia8.jpg"),
-  zambiaBook: require("../assets/ClickablePictures/books/zambiabook.jpg"),
-  zambiaTextBook: require("../assets/ClickablePictures/books/zambiatextBook.jpg"),
-  zambia2: require("../assets/ClickablePictures/books/zambia_2.jpg"),
 };
 
 /* =====================================================
-   BOOK DATASET
+   BOOK DATA
 ===================================================== */
 
 const BOOKS: Product[] = [
   {
     id: 1,
     name: "Technology Studies in Zambia",
-    price: 120.0,
+    price: 120,
     stock: true,
     image: BOOK_IMAGES.techStudies,
   },
   {
     id: 2,
     name: "Women in Zambia",
-    price: 99.0,
+    price: 99,
     stock: true,
     image: BOOK_IMAGES.womenInZambia,
   },
   {
     id: 3,
     name: "Zambia History Volume 3",
-    price: 150.0,
+    price: 150,
     stock: true,
     image: BOOK_IMAGES.zambia3,
   },
   {
     id: 4,
     name: "Zambia Culture Book",
-    price: 130.0,
+    price: 130,
     stock: true,
-    image: BOOK_IMAGES.zambiaBook,
+    image: BOOK_IMAGES.zambia4,
   },
 ];
 
 /* =====================================================
-   PRODUCT ROW COMPONENT
+   PRODUCT CARD
 ===================================================== */
 
 function ProductRow({
@@ -95,21 +90,24 @@ function ProductRow({
 }) {
   const [quantity, setQuantity] = useState(1);
 
+  const totalPrice = product.price * quantity;
+
   return (
     <View style={styles.card}>
       <Image source={product.image} style={styles.image} />
 
-      <View style={styles.infoSection}>
+      <View style={{ flex: 1 }}>
         <Text style={styles.title} numberOfLines={2}>
           {product.name}
         </Text>
 
-        <Text style={styles.price}>R {product.price.toFixed(2)}</Text>
+        <Text style={styles.price}>R {totalPrice.toFixed(2)}</Text>
 
         <Text style={[styles.stock, !product.stock && styles.outOfStock]}>
           {product.stock ? "In Stock" : "Out of Stock"}
         </Text>
 
+        {/* Quantity Controller */}
         <View style={styles.stepperRow}>
           <TouchableOpacity
             style={styles.stepButton}
@@ -128,6 +126,7 @@ function ProductRow({
           </TouchableOpacity>
         </View>
 
+        {/* Add Cart */}
         <TouchableOpacity
           style={styles.cartButton}
           onPress={() =>
@@ -137,7 +136,9 @@ function ProductRow({
             })
           }
         >
-          <Text style={styles.cartText}>Add to Cart</Text>
+          <Text style={styles.cartText}>
+            Add to Cart — R {totalPrice.toFixed(2)}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -150,11 +151,8 @@ function ProductRow({
 
 export default function BooksPage({ onAddToCart }: Props) {
   const router = useRouter();
-  const [cartCache, setCartCache] = useState<any[]>([]);
 
-  /* =====================================================
-     LOAD STORAGE CART
-  ===================================================== */
+  const [cartCache, setCartCache] = useState<any[]>([]);
 
   useEffect(() => {
     loadCart();
@@ -162,33 +160,47 @@ export default function BooksPage({ onAddToCart }: Props) {
 
   const loadCart = async () => {
     try {
-      const data = await AsyncStorage.getItem("CART_ITEMS");
-      if (data) setCartCache(JSON.parse(data));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const saveCart = async (items: any[]) => {
-    try {
-      await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
+      const stored = await AsyncStorage.getItem("CART_ITEMS");
+      if (stored) setCartCache(JSON.parse(stored));
     } catch (error) {
       console.log(error);
     }
   };
 
   /* =====================================================
-     ADD BOOK TO STORAGE CART
+     STORAGE SAFE ADD CART
   ===================================================== */
 
   const handleAddBook = async (product: Product) => {
-    const newCart = [...cartCache, product];
+    try {
+      const stored = await AsyncStorage.getItem("CART_ITEMS");
 
-    setCartCache(newCart);
-    await saveCart(newCart);
+      let cart: any[] = stored ? JSON.parse(stored) : [];
 
-    onAddToCart?.(product);
+      const existingIndex = cart.findIndex((item) => item.id === product.id);
+
+      if (existingIndex !== -1) {
+        cart[existingIndex].quantity += product.quantity || 1;
+      } else {
+        cart.push({
+          ...product,
+          quantity: product.quantity || 1,
+        });
+      }
+
+      await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(cart));
+
+      setCartCache(cart);
+
+      onAddToCart?.(product);
+    } catch (error) {
+      console.log("BOOK CART ADD ERROR:", error);
+    }
   };
+
+  /* =====================================================
+     UI
+  ===================================================== */
 
   return (
     <SafeAreaView style={styles.container}>
@@ -206,7 +218,6 @@ export default function BooksPage({ onAddToCart }: Props) {
         renderItem={({ item }) => (
           <ProductRow product={item} onAddToCart={handleAddBook} />
         )}
-        showsVerticalScrollIndicator={false}
         ListFooterComponent={<Footer />}
         contentContainerStyle={{ paddingBottom: 120 }}
       />
@@ -215,7 +226,7 @@ export default function BooksPage({ onAddToCart }: Props) {
 }
 
 /* =====================================================
-   STYLE
+   STYLES
 ===================================================== */
 
 const styles = StyleSheet.create({
@@ -251,8 +262,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginRight: 12,
   },
-
-  infoSection: { flex: 1 },
 
   title: {
     fontSize: 16,

@@ -3,14 +3,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    FlatList,
-    Image,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+
 import Footer from "./Footer";
 
 /* =====================================================
@@ -23,10 +24,7 @@ interface Product {
   price: number;
   stock: boolean;
   image: any;
-}
-
-interface Props {
-  onAddToCart?: (product: Product) => void;
+  quantity?: number;
 }
 
 /* =====================================================
@@ -76,7 +74,7 @@ const PET_PRODUCTS: Product[] = [
 ];
 
 /* =====================================================
-   PRODUCT ROW COMPONENT
+   PRODUCT CARD
 ===================================================== */
 
 function ProductRow({
@@ -84,9 +82,11 @@ function ProductRow({
   onAddToCart,
 }: {
   product: Product;
-  onAddToCart?: (product: Product) => void;
+  onAddToCart?: (product: Product & { quantity?: number }) => void;
 }) {
   const [quantity, setQuantity] = useState(1);
+
+  const totalPrice = product.price * quantity;
 
   return (
     <View style={styles.card}>
@@ -97,9 +97,9 @@ function ProductRow({
           {product.name}
         </Text>
 
-        <Text style={styles.price}>R {product.price.toFixed(2)}</Text>
+        <Text style={styles.price}>R {totalPrice.toFixed(2)}</Text>
 
-        <Text style={[styles.stock, !product.stock && styles.outOfStock]}>
+        <Text style={styles.stock}>
           {product.stock ? "In Stock" : "Out of Stock"}
         </Text>
 
@@ -141,13 +141,13 @@ function ProductRow({
    PETS PAGE
 ===================================================== */
 
-export default function PetsPage({ onAddToCart }: Props) {
+export default function PetsPage() {
   const router = useRouter();
 
   const [cartCache, setCartCache] = useState<any[]>([]);
 
   /* =====================================================
-     LOAD STORAGE CART
+     LOAD STORAGE
   ===================================================== */
 
   useEffect(() => {
@@ -156,33 +156,54 @@ export default function PetsPage({ onAddToCart }: Props) {
 
   const loadCart = async () => {
     try {
-      const data = await AsyncStorage.getItem("CART_ITEMS");
-      if (data) setCartCache(JSON.parse(data));
+      const stored = await AsyncStorage.getItem("CART_ITEMS");
+      if (stored) setCartCache(JSON.parse(stored));
     } catch (error) {
       console.log(error);
     }
   };
 
   const saveCart = async (items: any[]) => {
-    try {
-      await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
-    } catch (error) {
-      console.log(error);
-    }
+    await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(items));
   };
 
   /* =====================================================
-     ADD PET TO CART STORAGE
+     ⭐ PRODUCTION CART ENGINE
   ===================================================== */
 
-  const handleAddPet = async (product: Product) => {
-    const newCart = [...cartCache, product];
+  const handleAddPet = async (product: Product & { quantity?: number }) => {
+    try {
+      const stored = await AsyncStorage.getItem("CART_ITEMS");
 
-    setCartCache(newCart);
-    await saveCart(newCart);
+      let cart: any[] = stored ? JSON.parse(stored) : [];
 
-    onAddToCart?.(product);
+      const index = cart.findIndex((item) => item.id === product.id);
+
+      if (index !== -1) {
+        cart[index].quantity =
+          (cart[index].quantity || 0) + (product.quantity || 1);
+      } else {
+        cart.push({
+          ...product,
+          quantity: product.quantity || 1,
+        });
+      }
+
+      await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(cart));
+
+      setCartCache([...cart]);
+
+      // ⭐ IMPORTANT — Refresh Home Cart Badge
+      if ((global as any).cartRefresh) {
+        await (global as any).cartRefresh();
+      }
+    } catch (error) {
+      console.log("PET CART ERROR", error);
+    }
   };
+  /* =====================================================
+     UI
+  ===================================================== */
 
   return (
     <SafeAreaView style={styles.container}>
@@ -200,7 +221,6 @@ export default function PetsPage({ onAddToCart }: Props) {
         renderItem={({ item }) => (
           <ProductRow product={item} onAddToCart={handleAddPet} />
         )}
-        showsVerticalScrollIndicator={false}
         ListFooterComponent={<Footer />}
         contentContainerStyle={{ paddingBottom: 120 }}
       />
@@ -209,7 +229,7 @@ export default function PetsPage({ onAddToCart }: Props) {
 }
 
 /* =====================================================
-   STYLES
+   STYLE
 ===================================================== */
 
 const styles = StyleSheet.create({
@@ -265,10 +285,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#2ed1ef",
     fontWeight: "600",
-  },
-
-  outOfStock: {
-    color: "#999",
   },
 
   stepperRow: {
