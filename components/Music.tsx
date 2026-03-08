@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   FlatList,
   Image,
   SafeAreaView,
@@ -168,6 +169,10 @@ export default function MusicPage({ onAddToCart }: Props) {
 
       const index = cart.findIndex((item) => item.id === product.id);
 
+      /* =============================
+       CART UPDATE ENGINE
+    ============================= */
+
       if (index !== -1) {
         cart[index].quantity =
           (cart[index].quantity || 0) + (product.quantity || 1);
@@ -178,17 +183,42 @@ export default function MusicPage({ onAddToCart }: Props) {
         });
       }
 
+      /* =============================
+       SAVE CART
+    ============================= */
+
       await saveCart(cart);
       setCartCache([...cart]);
 
-      // Global cart badge refresh
+      /* =============================
+       GLOBAL BADGE REFRESH ENGINE
+    ============================= */
+
       if ((global as any).cartRefresh) {
         await (global as any).cartRefresh();
       }
 
+      /* =============================
+       CALLBACK SUPPORT
+    ============================= */
+
       onAddToCart?.(product);
+
+      /* =============================
+       SUCCESS POPUP
+    ============================= */
+
+      Alert.alert(
+        "✅ Added to Cart",
+        `${product.name} successfully added to your cart 🛒`,
+      );
     } catch (error) {
       console.log("MUSIC CART ERROR", error);
+
+      Alert.alert(
+        "❌ Cart Error",
+        "Something went wrong while adding item to cart.",
+      );
     }
   };
 

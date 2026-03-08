@@ -194,20 +194,24 @@ export default function FoodPage({ onAddToCart }: Props) {
           quantity: product.quantity || 1,
         });
       }
+
       await saveCart(cart);
       setCartCache([...cart]);
 
-      Alert.alert(
-        "Added to Cart",
-        `${product.name} successfully added to your cart 🛒`,
-      );
-
-      // Global badge refresh (if HomeScreen listener exists)
+      // Global badge refresh
       if ((global as any).cartRefresh) {
         await (global as any).cartRefresh();
       }
 
       onAddToCart?.(product);
+
+      // 🔔 POPUP
+      setTimeout(() => {
+        Alert.alert(
+          "Added to Cart",
+          `${product.name} successfully added to your cart 🛒`,
+        );
+      }, 100);
     } catch (error) {
       console.log("FOOD CART ERROR", error);
     }
