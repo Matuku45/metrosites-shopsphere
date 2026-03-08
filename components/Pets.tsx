@@ -179,6 +179,10 @@ export default function PetsPage() {
 
       const index = cart.findIndex((item) => item.id === product.id);
 
+      /* ============================
+       CART MERGE ENGINE
+    ============================ */
+
       if (index !== -1) {
         cart[index].quantity =
           (cart[index].quantity || 0) + (product.quantity || 1);
@@ -189,16 +193,38 @@ export default function PetsPage() {
         });
       }
 
+      /* ============================
+       SAVE CART
+    ============================ */
+
       await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(cart));
 
       setCartCache([...cart]);
 
-      // ⭐ IMPORTANT — Refresh Home Cart Badge
+      /* ============================
+       GLOBAL BADGE REFRESH
+    ============================ */
+
       if ((global as any).cartRefresh) {
         await (global as any).cartRefresh();
       }
+
+      /* ============================
+       SUCCESS POPUP
+    ============================ */
+
+      import("react-native").then(({ Alert }) => {
+        Alert.alert(
+          "🐾 Added to Cart",
+          `${product.name} successfully added to cart 🛒`,
+        );
+      });
     } catch (error) {
       console.log("PET CART ERROR", error);
+
+      import("react-native").then(({ Alert }) => {
+        Alert.alert("❌ Cart Error", "Failed to add pet item.");
+      });
     }
   };
   /* =====================================================

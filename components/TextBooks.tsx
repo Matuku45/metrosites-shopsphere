@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   FlatList,
   Image,
   SafeAreaView,
@@ -200,6 +201,10 @@ export default function TextBooksPage() {
 
       const index = cart.findIndex((item) => item.id === product.id);
 
+      /* =============================
+       CART UPDATE ENGINE
+    ============================= */
+
       if (index !== -1) {
         cart[index].quantity =
           (cart[index].quantity || 1) + (product.quantity || 1);
@@ -210,16 +215,34 @@ export default function TextBooksPage() {
         });
       }
 
+      /* =============================
+       SAVE CART
+    ============================= */
+
       await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(cart));
 
       setCartCache(cart);
 
-      // 🔥 Notify parent system if exists
+      /* =============================
+       GLOBAL BADGE REFRESH
+    ============================= */
+
       if ((global as any).cartRefresh) {
-        (global as any).cartRefresh();
+        await (global as any).cartRefresh();
       }
+
+      /* =============================
+       SUCCESS POPUP
+    ============================= */
+
+      Alert.alert(
+        "✅ Added to Cart",
+        `${product.name} successfully added to your cart 🛒`,
+      );
     } catch (error) {
       console.log("Textbook Cart Error", error);
+
+      Alert.alert("❌ Cart Error", "Unable to add textbook to cart.");
     }
   };
 

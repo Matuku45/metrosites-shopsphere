@@ -9,7 +9,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 import Footer from "./Footer";
@@ -170,17 +170,21 @@ export default function BooksPage({ onAddToCart }: Props) {
   /* =====================================================
      STORAGE SAFE ADD CART
   ===================================================== */
-
   const handleAddBook = async (product: Product) => {
     try {
       const stored = await AsyncStorage.getItem("CART_ITEMS");
 
       let cart: any[] = stored ? JSON.parse(stored) : [];
 
-      const existingIndex = cart.findIndex((item) => item.id === product.id);
+      const index = cart.findIndex((item) => item.id === product.id);
 
-      if (existingIndex !== -1) {
-        cart[existingIndex].quantity += product.quantity || 1;
+      /* ============================
+       CART MERGE ENGINE
+    ============================ */
+
+      if (index !== -1) {
+        cart[index].quantity =
+          (cart[index].quantity || 1) + (product.quantity || 1);
       } else {
         cart.push({
           ...product,
@@ -188,16 +192,42 @@ export default function BooksPage({ onAddToCart }: Props) {
         });
       }
 
+      /* ============================
+       SAVE CART
+    ============================ */
+
       await AsyncStorage.setItem("CART_ITEMS", JSON.stringify(cart));
 
       setCartCache(cart);
 
+      /* ============================
+       GLOBAL BADGE REFRESH
+    ============================ */
+
+      if ((global as any).cartRefresh) {
+        await (global as any).cartRefresh();
+      }
+
+      /* ============================
+       SUCCESS POPUP
+    ============================ */
+
+      import("react-native").then(({ Alert }) => {
+        Alert.alert(
+          "✅ Added to Cart",
+          `${product.name} successfully added to cart 🛒`,
+        );
+      });
+
       onAddToCart?.(product);
     } catch (error) {
       console.log("BOOK CART ADD ERROR:", error);
+
+      import("react-native").then(({ Alert }) => {
+        Alert.alert("❌ Cart Error", "Failed to add book to cart.");
+      });
     }
   };
-
   /* =====================================================
      UI
   ===================================================== */
