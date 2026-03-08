@@ -195,7 +195,7 @@ export default function HomeScreen() {
 
     return (
       <ScrollView>
-        <CategoryImageList />
+        <CategoryImageList onSelect={handleDepartmentSelect} />
         <Footer />
       </ScrollView>
     );
