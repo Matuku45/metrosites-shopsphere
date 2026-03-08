@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+    Alert,
     FlatList,
     Image,
     SafeAreaView,
@@ -193,9 +194,13 @@ export default function FoodPage({ onAddToCart }: Props) {
           quantity: product.quantity || 1,
         });
       }
-
       await saveCart(cart);
       setCartCache([...cart]);
+
+      Alert.alert(
+        "Added to Cart",
+        `${product.name} successfully added to your cart 🛒`,
+      );
 
       // Global badge refresh (if HomeScreen listener exists)
       if ((global as any).cartRefresh) {
