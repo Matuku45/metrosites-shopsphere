@@ -14,12 +14,12 @@ interface Props {
 
 const images: Record<string, any> = {
   pets: require("../assets/ClickablePictures/2023-vet-report__preview.jpg"),
-  home: require("../assets/ClickablePictures/a-mop-bucket-with-cleaning-supplies-and-brushes-against-a-living-room-background.__preview.jpg"),
+  home: require("../assets/ClickablePictures/Food/JuicySoda6Pacs.jpg"),
   sports: require("../assets/ClickablePictures/bike-accessories__preview.jpg"),
   books: require("../assets/ClickablePictures/textbooks/biology.jpg"),
-  outdoor: require("../assets/ClickablePictures/ElectronicAccessories/AppleIphone.jpg"),
+  outdoor: require("../assets/ClickablePictures/Food/noodles.jpg"),
   collectibles: require("../assets/ClickablePictures/close_up_view_of_worn_out_collectible_coins_scattered_on_a_flat_surface_1_1d279bd0e9.jpg__preview.jpg"),
-  hardware: require("../assets/ClickablePictures/construction-carpentry-tools-electric-corded-circular-saw-cordless-drill-background-min__preview.jpg"),
+  hardware: require("../assets/ClickablePictures/ElectronicAccessories/AppleIphone.jpg"),
   jewelry: require("../assets/ClickablePictures/goldnecklace_660x550_6df12311-a226-49ed-a709-2bd12a8006f5_2048x2048.__preview.jpg"),
   music: require("../assets/ClickablePictures/Guiter.jpg"),
   default: require("../assets/images/icon.png"),
@@ -27,18 +27,17 @@ const images: Record<string, any> = {
 
 const CATEGORIES: Category[] = [
   { id: 1, title: "Pets", imageKey: "pets", department: "Pets & Animals" },
-  { id: 2, title: "Food", imageKey: "home", department: "Food" },
+  { id: 2, title: "Drinks", imageKey: "home", department: "Food" },
   { id: 3, title: "Books", imageKey: "sports", department: "Electronics" },
   { id: 4, title: "TexsBooks", imageKey: "books", department: "Books" },
-  { id: 5, title: "Electonics", imageKey: "outdoor", department: "Food" },
+  { id: 5, title: "Food", imageKey: "outdoor", department: "Food" },
+
   {
-    id: 6,
-    title: "Collectibles",
-    imageKey: "collectibles",
-    department: "Books",
+    id: 7,
+    title: "Electronics Appliance",
+    imageKey: "hardware",
+    department: "Electronics",
   },
-  { id: 7, title: "Hardware", imageKey: "hardware", department: "Electronics" },
-  { id: 8, title: "Jewelry", imageKey: "jewelry", department: "Electronics" },
   {
     id: 9,
     title: "Music",
