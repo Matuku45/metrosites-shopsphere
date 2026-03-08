@@ -1,4 +1,5 @@
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
   StyleSheet,
   Text,
@@ -8,6 +9,8 @@ import {
 } from "react-native";
 
 export default function Header() {
+  const router = useRouter();
+
   return (
     <View style={styles.wrapper}>
       {/* Small Top Strip */}
@@ -27,12 +30,16 @@ export default function Header() {
 
       {/* Main Compact Header */}
       <View style={styles.mainHeader}>
-        {/* Brand Row */}
-        <View style={styles.brandRow}>
+        {/* ✅ CLICKABLE BRAND LOGO */}
+        <TouchableOpacity
+          style={styles.brandRow}
+          activeOpacity={0.7}
+          onPress={() => router.push("/")}
+        >
           <Text style={styles.brand}>
             <Text style={styles.brandAccent}>Buy</Text>Zambezi
           </Text>
-        </View>
+        </TouchableOpacity>
 
         {/* Search Row */}
         <View style={styles.searchContainer}>
@@ -59,7 +66,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F7F8",
   },
 
-  /* Top Small Strip */
   topBar: {
     backgroundColor: "#2C5D6B",
     paddingVertical: 6,
@@ -85,7 +91,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  /* Main Header */
   mainHeader: {
     paddingVertical: 12,
     paddingHorizontal: 12,
@@ -96,7 +101,7 @@ const styles = StyleSheet.create({
   },
 
   brand: {
-    fontSize: 22, // smaller for mobile
+    fontSize: 22,
     fontWeight: "bold",
     color: "#2B2B2B",
   },

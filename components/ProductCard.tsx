@@ -28,7 +28,6 @@ const images: Record<string, any> = {
 const CATEGORIES: Category[] = [
   { id: 1, title: "Pets", imageKey: "pets", department: "Pets & Animals" },
   { id: 2, title: "Drinks", imageKey: "home", department: "Food" },
-  { id: 3, title: "Books", imageKey: "sports", department: "Electronics" },
   { id: 4, title: "TexsBooks", imageKey: "books", department: "Books" },
   { id: 5, title: "Food", imageKey: "outdoor", department: "Food" },
 
